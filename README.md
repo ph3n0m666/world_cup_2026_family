@@ -20,29 +20,29 @@ A Vue 3 application for tracking World Cup 2026 match results and calculating po
 - Final standings show cumulative points across all 3 teams
 
 ### Example
-If Tomato owns Scotland, Egypt, and Germany:
-- Scotland wins (3 pts) + Egypt draws (1 pt) + Germany wins (3 pts) = **7 points** for Tomato
+If a participant owns Scotland, Egypt, and Germany:
+- Scotland wins (3 pts) + Egypt draws (1 pt) + Germany wins (3 pts) = **7 points** for that participant
 
 ## Pool Members
 
-| Name | Teams |
-|------|-------|
-| Al | New Zealand, Japan, Mexico |
-| Aisling | Tunisia, Sweden, Colombia |
-| Carrie | Jordan, Iran, France |
-| Cathy Pete | Curacao, Switzerland, Morocco |
-| Cathy Rose | Panama, Czechia, Netherlands |
-| Ciara | Iraq, Ecuador, Uruguay |
-| Dad | Qatar, Canada, Portugal |
-| Dean | Haiti, Norway, Brazil |
-| Ed | South Africa, Paraguay, Belgium |
-| Jack | DR Congo, Australia, Spain |
-| Kim | Bosnia & Herzegovina, Ivory Coast, United States |
-| Roisin | Ghana, Algeria, England |
-| Ross | Cape Verde, South Korea, Senegal |
-| Ryan | Saudi Arabia, Türkiye, Argentina |
-| Tomato | Scotland, Egypt, Germany |
-| Ve | Uzbekistan, Austria, Croatia |
+| Participant | Teams |
+|-------------|-------|
+| Participant 1 | New Zealand, Japan, Mexico |
+| Participant 2 | Tunisia, Sweden, Colombia |
+| Participant 3 | Jordan, Iran, France |
+| Participant 4 | Curacao, Switzerland, Morocco |
+| Participant 5 | Panama, Czechia, Netherlands |
+| Participant 6 | Iraq, Ecuador, Uruguay |
+| Participant 7 | Qatar, Canada, Portugal |
+| Participant 8 | Haiti, Norway, Brazil |
+| Participant 9 | South Africa, Paraguay, Belgium |
+| Participant 10 | DR Congo, Australia, Spain |
+| Participant 11 | Bosnia & Herzegovina, Ivory Coast, United States |
+| Participant 12 | Ghana, Algeria, England |
+| Participant 13 | Cape Verde, South Korea, Senegal |
+| Participant 14 | Saudi Arabia, Türkiye, Argentina |
+| Participant 15 | Scotland, Egypt, Germany |
+| Participant 16 | Uzbekistan, Austria, Croatia |
 
 ## Project Structure
 
@@ -96,7 +96,7 @@ standings.forEach(s => console.log(`${s.person}: ${s.points} pts`))
 ```javascript
 import { getPersonPointsBreakdown } from '@/utils/scoring'
 
-const breakdown = getPersonPointsBreakdown('Tomato', matches, poolParticipants)
+const breakdown = getPersonPointsBreakdown('Participant 15', matches, poolParticipants)
 // Shows points per team + match history
 ```
 
@@ -104,7 +104,7 @@ const breakdown = getPersonPointsBreakdown('Tomato', matches, poolParticipants)
 ```javascript
 import { getPersonForTeam } from '@/data/people'
 
-console.log(getPersonForTeam('Germany'))  // "Tomato"
+console.log(getPersonForTeam('Germany'))  // "Participant 15"
 ```
 
 ## Data Source
