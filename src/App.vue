@@ -8,17 +8,7 @@
 
       <nav class="app-nav">
         <router-link to="/" class="nav-link" active-class="active" exact>Home</router-link>
-
-        <div class="nav-dropdown">
-          <button class="dropdown-button" type="button">Group Standings</button>
-          <div class="dropdown-menu">
-            <router-link v-for="id in groupIds" :key="id" :to="`/groups/${id}`" class="dropdown-item"
-              active-class="active">
-              Group {{ id }}
-            </router-link>
-          </div>
-        </div>
-
+        <router-link to="/groups/A" class="nav-link" active-class="active">Group Standings</router-link>
         <router-link to="/matches" class="nav-link" active-class="active">Matches</router-link>
       </nav>
     </header>
@@ -30,9 +20,6 @@
 </template>
 
 <script setup>
-const groupIds = [
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
-]
 </script>
 
 <style>
@@ -49,19 +36,22 @@ body {
 }
 
 .app-header {
+  position: relative;
   margin-bottom: 2rem;
-  padding: 1.25rem 1.5rem;
+  padding: 1.75rem 1.5rem 2rem;
+  min-height: 220px;
   border-radius: 1rem;
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
   color: white;
   display: grid;
   gap: 1rem;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.17);
 }
 
 .app-subtitle {
   margin: 0 0 0.25rem;
   font-size: 0.9rem;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 h1 {
@@ -77,9 +67,7 @@ h1 {
   align-items: center;
 }
 
-.nav-link,
-.dropdown-button,
-.dropdown-item {
+.nav-link {
   border: none;
   background: transparent;
   color: white;
@@ -90,9 +78,7 @@ h1 {
   transition: background 0.2s ease;
 }
 
-.nav-link:hover,
-.dropdown-button:hover,
-.dropdown-item:hover {
+.nav-link:hover {
   background: rgba(255, 255, 255, 0.16);
 }
 
@@ -100,48 +86,38 @@ h1 {
   background: rgba(255, 255, 255, 0.24);
 }
 
-.nav-dropdown {
-  position: relative;
-}
-
-.dropdown-button {
-  cursor: pointer;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  display: grid;
-  background: white;
-  color: #111827;
-  min-width: 180px;
-  border-radius: 0.75rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(4px);
-}
-
-.nav-dropdown:hover .dropdown-menu {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-
-.dropdown-item {
-  color: #111827;
-  padding: 0.75rem 1rem;
-  display: block;
-}
-
-.dropdown-item.active {
-  background: #e0e7ff;
-}
-
 main {
   display: grid;
   gap: 1.75rem;
+}
+
+@media (max-width: 768px) {
+  #app {
+    padding: 1rem;
+  }
+
+  .app-header {
+    padding: 1.25rem 1rem 1.75rem;
+    min-height: auto;
+  }
+
+  .app-nav {
+    gap: 0.75rem;
+  }
+
+  .nav-link {
+    padding: 0.5rem 0.85rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .app-header {
+    padding: 1rem 0.9rem 1.5rem;
+  }
+
+  .app-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

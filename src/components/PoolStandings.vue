@@ -12,9 +12,9 @@
 
             <div v-for="(standing, index) in standings" :key="standing.person" class="standing-row">
                 <div class="rank">{{ index + 1 }}</div>
-                <div class="name">{{ standing.person }}</div>
-                <div class="points"><strong>{{ standing.points }}</strong></div>
-                <div class="teams">
+                <div class="name" data-label="Player">{{ standing.person }}</div>
+                <div class="points" data-label="Points"><strong>{{ standing.points }}</strong></div>
+                <div class="teams" data-label="Teams">
                     <span v-for="team in standing.teams" :key="team" class="team-badge">
                         {{ team }}
                     </span>
@@ -112,5 +112,53 @@ onMounted(async () => {
     border-radius: 9999px;
     font-size: 0.85rem;
     margin: 0.15rem;
+}
+
+@media (max-width: 720px) {
+    .standings-table {
+        width: 100%;
+    }
+
+    .header {
+        display: none;
+    }
+
+    .standing-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        padding: 0.9rem;
+    }
+
+    .rank {
+        text-align: left;
+        font-size: 0.95rem;
+    }
+
+    .name,
+    .points,
+    .teams {
+        display: grid;
+        gap: 0.35rem;
+    }
+
+    .name::before,
+    .points::before,
+    .teams::before {
+        content: attr(data-label);
+        color: #6b7280;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .points {
+        justify-content: flex-start;
+    }
+
+    .team-badge {
+        margin: 0.15rem 0.1rem 0 0;
+    }
 }
 </style>
