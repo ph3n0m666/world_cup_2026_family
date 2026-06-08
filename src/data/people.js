@@ -17,7 +17,7 @@ export const poolParticipants = {
   Kim: ["Bosnia & Herzegovina", "Ivory Coast", "United States"],
   Roisin: ["Ghana", "Algeria", "England"],
   Dean: ["Haiti", "Norway", "Brazil"],
-  "Cathy Pete": ["Curacao", "Switzerland", "Morocco"],
+  "Catch/Pete": ["Curacao", "Switzerland", "Morocco"],
   Al: ["New Zealand", "Japan", "Mexico"],
 };
 
