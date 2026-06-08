@@ -1,15 +1,18 @@
 {
-    "name": "world-cup-2026-predictor",
+    "name": "world-cup-2026-pool",
     "private": true,
     "version": "1.0.0",
     "type": "module",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "update-fixtures": "node scripts/updateMatches.js",
+        "build:fresh": "npm run update-fixtures && npm run build"
     },
     "dependencies": {
-        "vue": "^3.4.0"
+        "vue": "^3.4.0",
+        "vue-router": "^4.3.0"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^6.0.7",
