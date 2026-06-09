@@ -24,7 +24,7 @@
                         <div class="match-date">{{ formatDate(match.DateUtc) }}</div>
                         <div>
     {{ formatMatchTime(match.DateUtc).local }}
-    (Local time in Dublin: {{ formatMatchTime(match.DateUtc).dublin }})
+    (Ireland: {{ formatMatchTime(match.DateUtc).dublin }})
 </div>
                         <div v-if="isFinal(match)" class="match-tag">World Cup Final</div>
                     </div>
