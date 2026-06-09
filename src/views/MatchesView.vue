@@ -22,10 +22,7 @@
                 <div v-for="match in weekMatches" :key="match.MatchNumber" class="match-card">
                     <div class="match-card-header">
                         <div class="match-date">{{ formatDate(match.DateUtc) }}</div>
-                        <div>
-    {{ formatMatchTime(match.DateUtc).local }}
-    (Ireland: {{ formatMatchTime(match.DateUtc).dublin }})
-</div>
+                        <div>{{ formatMatchTime(match.DateUtc) }}</div>
                         <div v-if="isFinal(match)" class="match-tag">World Cup Final</div>
                     </div>
                     <div class="match-content">
@@ -151,19 +148,12 @@ function formatDate(dateString) {
     })
 }
 function formatMatchTime(dateString) {
-    const date = new Date(dateString);
-
-    return {
-        local: date.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-        }),
-        dublin: date.toLocaleTimeString('en-IE', {
-            timeZone: 'Europe/Dublin',
-            hour: '2-digit',
-            minute: '2-digit',
-        }),
-    };
+    return new Date(dateString).toLocaleTimeString('en-IE', {
+        timeZone: 'Europe/Dublin',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
 }
 
 </script>
