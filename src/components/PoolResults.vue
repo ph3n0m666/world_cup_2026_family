@@ -2,6 +2,14 @@
   <div class="pool-results">
     <div class="standings-section">
       <h2>Pool Standings</h2>
+      <div class="refresh-controls">
+        <button @click="refreshMatches" :disabled="loading">
+          Refresh matches
+        </button>
+        <span class="cache-age" v-if="cacheAge >= 0">
+          Cache age: {{ formatCacheAge(cacheAge) }}
+        </span>
+      </div>
 
       <div v-if="loading" class="loading">Loading matches...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
@@ -14,16 +22,13 @@
           <div class="teams">Teams</div>
         </div>
 
-        <div
-          v-for="(standing, index) in standings"
-          :key="standing.person"
-          class="standing-row"
-        >
+        <div v-for="(standing, index) in standings" :key="standing.person" class="standing-row">
           <div class="rank">{{ index + 1 }}</div>
           <div class="name">{{ standing.person }}</div>
           <div class="points"><strong>{{ standing.points }}</strong></div>
           <div class="teams">
-            <span v-for="team in standing.teams" :key="team" class="team-badge">
+            <span v-for="team in standing.teams" :key="team" class="team-badge"
+              :class="{ eliminated: isTeamEliminated(team) }">
               {{ team }}
             </span>
           </div>
@@ -48,12 +53,10 @@
             <div class="person">Pool Person</div>
           </div>
 
-          <div
-            v-for="team in groupStandings[group.id] || []"
-            :key="team.name"
-            class="team-row"
-          >
-            <div class="team">{{ team.name }}</div>
+          <div v-for="team in groupStandings[group.id] || []" :key="team.name" class="team-row">
+            <div class="team" :class="{ eliminated: isTeamEliminated(team.name) }">
+              {{ team.name }}
+            </div>
             <div class="stats">{{ team.matches }}</div>
             <div class="stats">{{ team.wins }}</div>
             <div class="stats">{{ team.draws }}</div>
@@ -71,15 +74,13 @@
 
     <div class="matches-section">
       <h2>Recent Matches</h2>
-      <div
-        v-for="match in recentMatches"
-        :key="match.MatchNumber"
-        class="match-card"
-      >
+      <div v-for="match in recentMatches" :key="match.MatchNumber" class="match-card">
         <div class="match-date">{{ formatDate(match.DateUtc) }}</div>
         <div class="match-content">
           <div class="team home">
-            <div class="team-name">{{ match.HomeTeam }}</div>
+            <div class="team-name" :class="{ eliminated: isTeamEliminated(match.HomeTeam) }">
+              {{ match.HomeTeam }}
+            </div>
             <div class="team-person">
               {{ getPersonForTeam(match.HomeTeam) || "—" }}
             </div>
@@ -93,7 +94,9 @@
           </div>
 
           <div class="team away">
-            <div class="team-name">{{ match.AwayTeam }}</div>
+            <div class="team-name" :class="{ eliminated: isTeamEliminated(match.AwayTeam) }">
+              {{ match.AwayTeam }}
+            </div>
             <div class="team-person">
               {{ getPersonForTeam(match.AwayTeam) || "—" }}
             </div>
@@ -106,9 +109,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { getMatches } from "@/utils/fetchMatches.js";
+import { getMatches, getCacheAge, clearMatchesCache } from "@/utils/fetchMatches.js";
 import { calculateStandings, getGroupStandings } from "@/utils/scoring.js";
-import { getPersonForTeam, poolParticipants } from "@/data/people.js";
+import { getPersonForTeam, normalizeTeamName, poolParticipants } from "@/data/people.js";
 import { groups } from "@/data/groups.js";
 
 const loading = ref(true);
@@ -116,33 +119,121 @@ const error = ref(null);
 const matches = ref([]);
 const standings = ref([]);
 const groupStandings = ref({});
+const cacheAge = ref(-1);
+const eliminatedTeams = ref(new Set());
 
-onMounted(async () => {
+const poolTeamSet = new Set(
+  Object.values(poolParticipants)
+    .flat()
+    .map(normalizeTeamName),
+);
+
+function isTeamEliminated(teamName) {
+  return eliminatedTeams.value.has(normalizeTeamName(teamName));
+}
+
+function formatCacheAge(seconds) {
+  if (seconds < 0) return "Unknown";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min`;
+  return `${Math.floor(minutes / 60)} hr ${minutes % 60} min`;
+}
+
+function updateEliminatedTeams() {
+  const eliminated = new Set();
+  const groupMatchesById = {};
+
+  matches.value
+    .filter((match) => typeof match.Group === "string" && match.Group.startsWith("Group "))
+    .forEach((match) => {
+      const groupId = match.Group.replace("Group ", "");
+      groupMatchesById[groupId] = groupMatchesById[groupId] || [];
+      groupMatchesById[groupId].push(match);
+    });
+
+  Object.entries(groupMatchesById).forEach(([groupId, groupMatches]) => {
+    const complete = groupMatches.every(
+      (match) => match.HomeTeamScore !== null && match.AwayTeamScore !== null,
+    );
+
+    if (!complete) return;
+
+    const standingsForGroup = getGroupStandings(groupId, matches.value);
+    const advancing = new Set(
+      standingsForGroup.slice(0, 2).map((team) => normalizeTeamName(team.name)),
+    );
+
+    standingsForGroup.forEach((team) => {
+      const normalized = normalizeTeamName(team.name);
+      if (!advancing.has(normalized) && poolTeamSet.has(normalized)) {
+        eliminated.add(normalized);
+      }
+    });
+  });
+
+  matches.value
+    .filter((match) => !match.Group)
+    .forEach((match) => {
+      if (match.HomeTeamScore === null || match.AwayTeamScore === null) return;
+
+      const home = normalizeTeamName(match.HomeTeam);
+      const away = normalizeTeamName(match.AwayTeam);
+      const homeInPool = poolTeamSet.has(home);
+      const awayInPool = poolTeamSet.has(away);
+
+      if (!homeInPool && !awayInPool) return;
+
+      let loser = null;
+      if (match.HomeTeamScore > match.AwayTeamScore) loser = away;
+      else if (match.HomeTeamScore < match.AwayTeamScore) loser = home;
+      else if (match.Winner) {
+        const winnerName = normalizeTeamName(match.Winner);
+        if (winnerName === home) loser = away;
+        else if (winnerName === away) loser = home;
+      }
+
+      if (loser && poolTeamSet.has(loser)) {
+        eliminated.add(loser);
+      }
+    });
+
+  eliminatedTeams.value = eliminated;
+}
+
+async function loadMatches() {
+  loading.value = true;
+  error.value = null;
+
   try {
     matches.value = await getMatches();
+    cacheAge.value = getCacheAge();
     standings.value = calculateStandings(matches.value, poolParticipants);
 
-    // Calculate standings for each group
     const groupMap = {};
     groups.forEach((group) => {
       groupMap[group.id] = getGroupStandings(group.id, matches.value);
     });
     groupStandings.value = groupMap;
 
-    loading.value = false;
+    updateEliminatedTeams();
   } catch (err) {
     error.value = err.message;
+  } finally {
     loading.value = false;
   }
-});
+}
+
+async function refreshMatches() {
+  clearMatchesCache();
+  await loadMatches();
+}
+
+onMounted(loadMatches);
 
 const recentMatches = computed(() => {
   return matches.value
-    .filter((m) => m.Group !== null) // Only group stage
-    .sort(
-      (a, b) =>
-        new Date(b.DateUtc).getTime() - new Date(a.DateUtc).getTime()
-    )
+    .filter((m) => m.Group !== null)
+    .sort((a, b) => new Date(b.DateUtc).getTime() - new Date(a.DateUtc).getTime())
     .slice(0, 10);
 });
 
@@ -298,6 +389,32 @@ h2 {
 .team-person {
   font-size: 0.85em;
   color: #666;
+}
+
+.refresh-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.refresh-controls button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+
+.refresh-controls button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cache-age {
+  color: #555;
+  font-size: 0.95rem;
 }
 
 .score {

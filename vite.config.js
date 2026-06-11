@@ -9,4 +9,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      "/api/matches": {
+        target: "https://fixturedownload.com",
+        changeOrigin: true,
+        rewrite: (path) =>
+          path.replace(/^\/api\/matches/, "/feed/json/fifa-world-cup-2026"),
+      },
+    },
+  },
 });

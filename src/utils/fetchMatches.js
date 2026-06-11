@@ -5,7 +5,7 @@
 
 import matchesData from "../data/matches.json";
 
-const API_URL = "https://fixturedownload.com/feed/json/fifa-world-cup-2026";
+const API_URL = "/api/matches";
 const CACHE_KEY = "worldcup2026_matches";
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
