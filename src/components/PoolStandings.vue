@@ -15,7 +15,8 @@
                 <div class="name" data-label="Player">{{ standing.person }}</div>
                 <div class="points" data-label="Points"><strong>{{ standing.points }}</strong></div>
                 <div class="teams" data-label="Teams">
-                    <span v-for="team in standing.teams" :key="team" class="team-badge">
+                    <span v-for="team in standing.teams" :key="team" class="team-badge"
+                        :class="{ eliminated: eliminatedTeams.has(normalizeTeamName(team)) }">
                         {{ team }}
                     </span>
                 </div>
@@ -25,23 +26,30 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getMatches } from '@/utils/fetchMatches.js'
-import { calculateStandings } from '@/utils/scoring.js'
-import { poolParticipants } from '@/data/people.js'
+import { computed, watch, onMounted, ref } from 'vue'
+import { calculateStandings, getEliminatedTeams } from '@/utils/scoring.js'
+import { normalizeTeamName, poolParticipants } from '@/data/people.js'
+import { matches, loading, error, loadMatches } from '@/store/matches.js'
 
-const loading = ref(true)
-const error = ref(null)
 const standings = ref([])
+const eliminatedTeams = computed(() => getEliminatedTeams(matches.value))
+
+function updateStandings() {
+    standings.value = calculateStandings(matches.value, poolParticipants)
+}
+
+watch(matches, (newMatches) => {
+    if (newMatches.length) {
+        updateStandings()
+    }
+})
 
 onMounted(async () => {
     try {
-        const matches = await getMatches()
-        standings.value = calculateStandings(matches, poolParticipants)
+        await loadMatches()
+        updateStandings()
     } catch (err) {
-        error.value = err.message
-    } finally {
-        loading.value = false
+        // error is handled by shared store
     }
 })
 </script>
@@ -114,15 +122,12 @@ onMounted(async () => {
     margin: 0.15rem;
 }
 
-@media (max-width: 720px) {
-    .standings-table {
-        width: 100%;
-    }
+.team-badge.eliminated {
+    opacity: 0.55;
+    text-decoration: line-through;
+}
 
-    .header {
-        display: none;
-    }
-
+@media (max-width: 768px) {
     .standing-row {
         display: grid;
         grid-template-columns: 1fr;

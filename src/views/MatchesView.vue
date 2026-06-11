@@ -50,15 +50,37 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { getMatches } from '@/utils/fetchMatches.js'
+import { ref, computed, watch, onMounted } from 'vue'
 import { getPersonForTeam } from '@/data/people.js'
+import { matches, loading, error, loadMatches } from '@/store/matches.js'
 
-const loading = ref(true)
-const error = ref(null)
-const matches = ref([])
 const weekOptions = ref([])
 const selectedWeekKey = ref('')
+
+function updateWeekState(matchData) {
+    const options = buildWeekOptions(matchData)
+    weekOptions.value = options
+    selectedWeekKey.value = findDefaultWeek(options)
+}
+
+watch(matches, (newMatches) => {
+    if (newMatches.length) {
+        updateWeekState(newMatches)
+    }
+})
+
+onMounted(async () => {
+    try {
+        if (!matches.value.length) {
+            await loadMatches()
+        }
+        if (matches.value.length) {
+            updateWeekState(matches.value)
+        }
+    } catch (err) {
+        // error displayed by shared store
+    }
+})
 
 function getWeekStart(dateString) {
     const date = new Date(dateString)
@@ -114,20 +136,6 @@ function findDefaultWeek(weekList) {
 
     return weekList[weekList.length - 1].key
 }
-
-onMounted(async () => {
-    try {
-        const data = await getMatches()
-        matches.value = data
-        const options = buildWeekOptions(matches.value)
-        weekOptions.value = options
-        selectedWeekKey.value = findDefaultWeek(options)
-    } catch (err) {
-        error.value = err.message
-    } finally {
-        loading.value = false
-    }
-})
 
 const weekMatches = computed(() => {
     const currentWeek = weekOptions.value.find((week) => week.key === selectedWeekKey.value)

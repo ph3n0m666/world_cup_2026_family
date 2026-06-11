@@ -10,6 +10,11 @@ const routes = [
     component: HomeView,
   },
   {
+    path: "/results",
+    name: "results",
+    component: () => import("@/components/PoolResults.vue"),
+  },
+  {
     path: "/groups/:groupId",
     name: "group",
     component: GroupStandingsView,

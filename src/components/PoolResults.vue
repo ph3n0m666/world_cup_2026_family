@@ -2,14 +2,14 @@
   <div class="pool-results">
     <div class="standings-section">
       <h2>Pool Standings</h2>
-      <div class="refresh-controls">
+      <!-- <div class="refresh-controls">
         <button @click="refreshMatches" :disabled="loading">
           Refresh matches
         </button>
         <span class="cache-age" v-if="cacheAge >= 0">
           Cache age: {{ formatCacheAge(cacheAge) }}
         </span>
-      </div>
+      </div> -->
 
       <div v-if="loading" class="loading">Loading matches...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
@@ -108,18 +108,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { getMatches, getCacheAge, clearMatchesCache } from "@/utils/fetchMatches.js";
+import { computed, onMounted, watch, ref } from "vue";
 import { calculateStandings, getGroupStandings } from "@/utils/scoring.js";
 import { getPersonForTeam, normalizeTeamName, poolParticipants } from "@/data/people.js";
 import { groups } from "@/data/groups.js";
+import {
+  matches,
+  loading,
+  error,
+  cacheAge,
+  loadMatches,
+  refreshMatches,
+} from "@/store/matches.js";
 
-const loading = ref(true);
-const error = ref(null);
-const matches = ref([]);
 const standings = ref([]);
 const groupStandings = ref({});
-const cacheAge = ref(-1);
 const eliminatedTeams = ref(new Set());
 
 const poolTeamSet = new Set(
@@ -200,35 +203,35 @@ function updateEliminatedTeams() {
   eliminatedTeams.value = eliminated;
 }
 
-async function loadMatches() {
-  loading.value = true;
-  error.value = null;
+function updateResults() {
+  standings.value = calculateStandings(matches.value, poolParticipants);
 
+  const groupMap = {};
+  groups.forEach((group) => {
+    groupMap[group.id] = getGroupStandings(group.id, matches.value);
+  });
+  groupStandings.value = groupMap;
+  updateEliminatedTeams();
+}
+
+watch(matches, (newMatches) => {
+  if (newMatches.length) {
+    updateResults()
+  }
+})
+
+async function initMatches() {
   try {
-    matches.value = await getMatches();
-    cacheAge.value = getCacheAge();
-    standings.value = calculateStandings(matches.value, poolParticipants);
-
-    const groupMap = {};
-    groups.forEach((group) => {
-      groupMap[group.id] = getGroupStandings(group.id, matches.value);
-    });
-    groupStandings.value = groupMap;
-
-    updateEliminatedTeams();
+    if (!matches.value.length) {
+      await loadMatches()
+    }
+    updateResults()
   } catch (err) {
-    error.value = err.message;
-  } finally {
-    loading.value = false;
+    // error handled by shared store
   }
 }
 
-async function refreshMatches() {
-  clearMatchesCache();
-  await loadMatches();
-}
-
-onMounted(loadMatches);
+onMounted(initMatches)
 
 const recentMatches = computed(() => {
   return matches.value

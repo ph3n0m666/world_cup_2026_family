@@ -7,7 +7,11 @@
  * - Loss: 0 points
  */
 
-import { getPersonForTeam, normalizeTeamName } from "../data/people.js";
+import {
+  getPersonForTeam,
+  normalizeTeamName,
+  poolParticipants,
+} from "../data/people.js";
 
 /**
  * Calculate points from a match result
@@ -242,4 +246,74 @@ export function getGroupStandings(groupId, matches) {
   });
 
   return standings;
+}
+
+/**
+ * Get eliminated pool teams from match results.
+ * Teams are eliminated if they fail to advance from a completed group
+ * or if they lose a knockout match.
+ * @param {Array} matches
+ * @returns {Set<string>} Normalized team names
+ */
+export function getEliminatedTeams(matches) {
+  const eliminated = new Set();
+  const poolTeamSet = new Set(
+    Object.values(poolParticipants).flat().map(normalizeTeamName),
+  );
+
+  const groupMatchesById = {};
+  matches
+    .filter(
+      (match) =>
+        typeof match.Group === "string" && match.Group.startsWith("Group "),
+    )
+    .forEach((match) => {
+      const groupId = match.Group.replace("Group ", "");
+      groupMatchesById[groupId] = groupMatchesById[groupId] || [];
+      groupMatchesById[groupId].push(match);
+    });
+
+  Object.entries(groupMatchesById).forEach(([groupId, groupMatches]) => {
+    const complete = groupMatches.every(
+      (match) => match.HomeTeamScore !== null && match.AwayTeamScore !== null,
+    );
+
+    if (!complete) return;
+
+    const standingsForGroup = getGroupStandings(groupId, matches);
+    const advancing = new Set(
+      standingsForGroup.slice(0, 2).map((team) => normalizeTeamName(team.name)),
+    );
+
+    standingsForGroup.forEach((team) => {
+      const normalized = normalizeTeamName(team.name);
+      if (!advancing.has(normalized) && poolTeamSet.has(normalized)) {
+        eliminated.add(normalized);
+      }
+    });
+  });
+
+  matches
+    .filter((match) => !match.Group)
+    .forEach((match) => {
+      if (match.HomeTeamScore === null || match.AwayTeamScore === null) return;
+
+      const home = normalizeTeamName(match.HomeTeam);
+      const away = normalizeTeamName(match.AwayTeam);
+
+      let loser = null;
+      if (match.HomeTeamScore > match.AwayTeamScore) loser = away;
+      else if (match.HomeTeamScore < match.AwayTeamScore) loser = home;
+      else if (match.Winner) {
+        const winnerName = normalizeTeamName(match.Winner);
+        if (winnerName === home) loser = away;
+        else if (winnerName === away) loser = home;
+      }
+
+      if (loser && poolTeamSet.has(loser)) {
+        eliminated.add(loser);
+      }
+    });
+
+  return eliminated;
 }

@@ -48,27 +48,37 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getMatches } from '@/utils/fetchMatches.js'
 import { getGroupStandings } from '@/utils/scoring.js'
 import { getPersonForTeam } from '@/data/people.js'
 import { groups } from '@/data/groups.js'
+import { matches, loading, error, loadMatches } from '@/store/matches.js'
 
 const route = useRoute()
 const router = useRouter()
 const groupId = ref(route.params.groupId || 'A')
 const selectedGroup = ref(groupId.value)
 const standings = ref([])
-const loading = ref(true)
-const error = ref(null)
 const groupIds = groups.map((group) => group.id)
+
+function updateStandings(id) {
+    standings.value = getGroupStandings(id, matches.value)
+}
+
+watch(matches, (newMatches) => {
+    if (newMatches.length) {
+        updateStandings(groupId.value)
+    }
+})
 
 async function loadStandings(id) {
     loading.value = true
     error.value = null
 
     try {
-        const matches = await getMatches()
-        standings.value = getGroupStandings(id, matches)
+        if (!matches.value.length) {
+            await loadMatches()
+        }
+        updateStandings(id)
     } catch (err) {
         error.value = err.message
     } finally {

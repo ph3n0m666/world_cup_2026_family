@@ -6,8 +6,18 @@
         <h1>Results & Standings</h1>
       </div>
 
+      <div class="header-actions">
+        <button @click="refreshMatches" :disabled="loading">
+          {{ loading ? 'Refreshing...' : 'Refresh matches' }}
+        </button>
+        <span class="cache-age" v-if="cacheAge >= 0 && !loading">
+          Cache age: {{ formatCacheAge(cacheAge) }}
+        </span>
+      </div>
+
       <nav class="app-nav">
         <router-link to="/" class="nav-link" active-class="active" exact>Home</router-link>
+        <!-- <router-link to="/results" class="nav-link" active-class="active">Pool Results</router-link> -->
         <router-link to="/groups/A" class="nav-link" active-class="active">Group Standings</router-link>
         <router-link to="/matches" class="nav-link" active-class="active">Matches</router-link>
       </nav>
@@ -20,6 +30,13 @@
 </template>
 
 <script setup>
+import { refreshMatches, loading, cacheAge } from '@/store/matches.js'
+
+function formatCacheAge(seconds) {
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes} min`
+  return `${Math.floor(minutes / 60)} hr ${minutes % 60} min`
+}
 </script>
 
 <style>
@@ -65,6 +82,39 @@ h1 {
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.header-actions button {
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0.75rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.header-actions button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.header-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cache-age {
+  color: #f8fafc;
+  opacity: 0.88;
+  font-size: 0.95rem;
 }
 
 .nav-link {
