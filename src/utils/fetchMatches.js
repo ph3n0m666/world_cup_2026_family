@@ -7,7 +7,7 @@ import matchesData from "../data/matches.json";
 
 const API_URL = "/api/matches";
 const CACHE_KEY = "worldcup2026_matches";
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
 /**
  * Get matches data from API or cache
@@ -17,7 +17,7 @@ export async function getMatches() {
   const cached = getCachedMatches();
 
   if (cached) {
-    console.log("Using cached matches data (24h cache)");
+    console.log("Using cached matches data (12h cache)");
     return cached;
   }
 

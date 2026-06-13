@@ -4,6 +4,7 @@ import {
   clearMatchesCache as clearCache,
   getCacheAge as readCacheAge,
 } from "@/utils/fetchMatches.js";
+import { scheduleMatchRefresh } from "@/utils/autoRefresh.js";
 
 const matches = ref([]);
 const loading = ref(false);
@@ -18,6 +19,7 @@ function updateCacheAge() {
 async function loadMatches(force = false) {
   if (!force && matches.value.length > 0) {
     updateCacheAge();
+    scheduleMatchRefresh(matches.value, refreshMatches);
     return matches.value;
   }
 
@@ -33,6 +35,7 @@ async function loadMatches(force = false) {
       const data = await fetchMatches();
       matches.value = data;
       updateCacheAge();
+      scheduleMatchRefresh(matches.value, refreshMatches);
       return data;
     } catch (err) {
       error.value = err.message || "Failed to load matches";

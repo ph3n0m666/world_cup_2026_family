@@ -10,7 +10,8 @@
                 <div class="teams">Teams</div>
             </div>
 
-            <div v-for="(standing, index) in standings" :key="standing.person" class="standing-row">
+            <div v-for="(standing, index) in standings" :key="standing.person" class="standing-row"
+                :class="{ eliminated: isPersonEliminated(standing) }">
                 <div class="rank">{{ index + 1 }}</div>
                 <div class="name" data-label="Player">{{ standing.person }}</div>
                 <div class="points" data-label="Points"><strong>{{ standing.points }}</strong></div>
@@ -36,6 +37,10 @@ const eliminatedTeams = computed(() => getEliminatedTeams(matches.value))
 
 function updateStandings() {
     standings.value = calculateStandings(matches.value, poolParticipants)
+}
+
+function isPersonEliminated(standing) {
+    return standing.teams.every((team) => eliminatedTeams.value.has(normalizeTeamName(team)))
 }
 
 watch(matches, (newMatches) => {
@@ -98,6 +103,11 @@ onMounted(async () => {
     border: 1px solid #e5e7eb;
     border-radius: 0.75rem;
     margin-bottom: 0.5rem;
+}
+
+.standing-row.eliminated {
+    color: #6b7280;
+    text-decoration: line-through;
 }
 
 .rank {

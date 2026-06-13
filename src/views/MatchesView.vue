@@ -28,7 +28,11 @@
                     <div class="match-content">
                         <div class="team home">
                             <div class="team-name">{{ match.HomeTeam }}</div>
-                            <div class="team-person">{{ getPersonForTeam(match.HomeTeam) || '—' }}</div>
+                            <div class="team-person">
+                                <strong v-if="isTeamWinner(match, match.HomeTeam)">{{ getPersonForTeam(match.HomeTeam)
+                                    || '—' }}</strong>
+                                <span v-else>{{ getPersonForTeam(match.HomeTeam) || '—' }}</span>
+                            </div>
                         </div>
 
                         <div class="score">
@@ -40,7 +44,11 @@
 
                         <div class="team away">
                             <div class="team-name">{{ match.AwayTeam }}</div>
-                            <div class="team-person">{{ getPersonForTeam(match.AwayTeam) || '—' }}</div>
+                            <div class="team-person">
+                                <strong v-if="isTeamWinner(match, match.AwayTeam)">{{ getPersonForTeam(match.AwayTeam)
+                                    || '—' }}</strong>
+                                <span v-else>{{ getPersonForTeam(match.AwayTeam) || '—' }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -145,6 +153,21 @@ const weekMatches = computed(() => {
 
 function isFinal(match) {
     return match.MatchNumber === 104
+}
+
+function isTeamWinner(match, teamName) {
+    if (match.HomeTeamScore === null || match.AwayTeamScore === null) {
+        return false
+    }
+
+    if (match.HomeTeamScore === match.AwayTeamScore) {
+        return false
+    }
+
+    return (
+        (teamName === match.HomeTeam && match.HomeTeamScore > match.AwayTeamScore) ||
+        (teamName === match.AwayTeam && match.AwayTeamScore > match.HomeTeamScore)
+    )
 }
 
 function formatDate(dateString) {
@@ -270,6 +293,10 @@ function formatMatchTime(dateString) {
 
 .team-person {
     color: #4b5563;
+}
+
+.team-person strong {
+    color: #111827;
 }
 
 .score {
